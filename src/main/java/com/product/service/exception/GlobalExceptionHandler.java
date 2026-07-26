@@ -21,29 +21,37 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage(), request.getRequestURI());
-        log.info("Resource not found: {}", ex.getMessage());
+        var status = HttpStatus.NOT_FOUND;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.info("Handled exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
     @ExceptionHandler(ResourceConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ResourceConflictException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI());
-        log.info("Resource conflict: {}", ex.getMessage());
+        var status = HttpStatus.CONFLICT;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.info("Handled exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(DuplicateProductException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateProduct(DuplicateProductException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), request.getRequestURI());
-        log.info("Duplicate product: {}", ex.getMessage());
+        var status = HttpStatus.CONFLICT;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.info("Handled exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(ExternalServiceException.class)
     public ResponseEntity<ErrorResponse> handleExternalService(ExternalServiceException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.SERVICE_UNAVAILABLE.value(), "Service Unavailable", ex.getMessage(), request.getRequestURI());
-        log.warn("External service error: {}", ex.getMessage(), ex);
+        var status = HttpStatus.SERVICE_UNAVAILABLE;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.warn("Handled external service exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
 
@@ -53,8 +61,10 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .findFirst()
                 .orElse("Solicitud inválida");
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", msg, request.getRequestURI());
-        log.info("Validation error: {}", msg);
+        var status = HttpStatus.BAD_REQUEST;
+        var body = buildErrorResponse(status, msg, request);
+        log.warn("Handled validation error status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), msg);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
@@ -64,45 +74,67 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .findFirst()
                 .orElse("Solicitud inválida");
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", msg, request.getRequestURI());
-        log.info("Constraint violation: {}", msg);
+        var status = HttpStatus.BAD_REQUEST;
+        var body = buildErrorResponse(status, msg, request);
+        log.warn("Handled constraint violation status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), msg);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         var msg = "El cuerpo de la solicitud no tiene un formato válido";
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", msg, request.getRequestURI());
-        log.info("Malformed request body: {}", ex.getMessage());
+        var status = HttpStatus.BAD_REQUEST;
+        var body = buildErrorResponse(status, msg, request);
+        log.warn("Handled bad request status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(), request.getRequestURI());
-        log.info("Illegal argument: {}", ex.getMessage());
+        var status = HttpStatus.BAD_REQUEST;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.warn("Handled bad request status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(InvalidProductIdException.class)
     public ResponseEntity<ErrorResponse> handleInvalidProductId(InvalidProductIdException ex, HttpServletRequest request) {
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage(), request.getRequestURI());
-        log.info("Invalid product id: {}", ex.getMessage());
+        var status = HttpStatus.BAD_REQUEST;
+        var body = buildErrorResponse(status, ex.getMessage(), request);
+        log.warn("Handled bad request status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
         var msg = "Conflicto de datos al persistir el producto";
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.CONFLICT.value(), "Conflict", msg, request.getRequestURI());
-        log.warn("Data integrity violation", ex);
+        var status = HttpStatus.CONFLICT;
+        var body = buildErrorResponse(status, msg, request);
+        log.error("Handled data integrity exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleInternal(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error", ex);
-        var body = new ErrorResponse(LocalDateTime.now(), HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error", ex.getMessage(), request.getRequestURI());
+        var status = HttpStatus.INTERNAL_SERVER_ERROR;
+        log.error("Handled unexpected exception status={} method={} path={} message={}",
+                status.value(), request.getMethod(), request.getRequestURI(), ex.getMessage(), ex);
+        var body = buildErrorResponse(status, ex.getMessage(), request);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    private ErrorResponse buildErrorResponse(HttpStatus status, String message, HttpServletRequest request) {
+        return new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
     }
 }
