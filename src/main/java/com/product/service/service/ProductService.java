@@ -46,6 +46,19 @@ public class ProductService {
         return productMapper.toResponse(findProduct(id));
     }
 
+    public List<ProductResponse> getProductsByCustomerId(Long customerId) {
+        if (customerId == null || customerId <= 0) {
+            throw new InvalidProductIdException("El id del cliente debe ser mayor a cero");
+        }
+
+        return executeDatabaseOperation(() ->
+                        productRepository.findByCustomerId(customerId)
+                                .stream()
+                                .map(productMapper::toResponse)
+                                .toList(),
+                "Error de base de datos al consultar productos por customerId");
+    }
+
     public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
         return executeDatabaseOperation(() -> {
             var entity = findProduct(id);

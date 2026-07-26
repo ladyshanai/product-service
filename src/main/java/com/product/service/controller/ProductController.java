@@ -27,6 +27,18 @@ public class ProductController {
         this.productService = productService;
     }
 
+    @GetMapping("/customer/{customerId}")
+    @Operation(summary = "Obtener todos los productos por ID del cliente", description = "Obtiene los detalles de un producto específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Producto encontrado"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
+    public ResponseEntity<List<ProductResponse>> getProductsByCustomerId(
+            @Parameter(description = "ID del cliente") @PathVariable @Positive(message = "El id debe ser mayor a 0") Long customerId) {
+        var response = productService.getProductsByCustomerId(customerId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID", description = "Obtiene los detalles de un producto específico")
     @ApiResponses(value = {
